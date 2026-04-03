@@ -1,11 +1,11 @@
 package me.kous500.curvebuilding.bukkit;
 
-import com.github.fierioziy.particlenativeapi.api.particle.type.ParticleTypeMotion;
-import com.github.fierioziy.particlenativeapi.api.utils.ParticleException;
 import com.sk89q.worldedit.world.World;
 import me.kous500.curvebuilding.math.PosData;
 import me.kous500.curvebuilding.bukkit.config.BukkitConfig;
 import me.kous500.curvebuilding.math.Vector3;
+import org.bukkit.Particle;
+import org.bukkit.Particle.DustOptions;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -16,7 +16,6 @@ import java.util.TimerTask;
 import java.util.UUID;
 
 import static me.kous500.curvebuilding.WorldeditAdapter.*;
-import static me.kous500.curvebuilding.bukkit.CurveBuildingPlugin.particles_1_13;
 import static me.kous500.curvebuilding.math.PosData.getPosMap;
 import static me.kous500.curvebuilding.Util.*;
 import static java.lang.Math.sqrt;
@@ -89,8 +88,8 @@ public class SendParticles extends TimerTask {
                     }
                 }
 
-                sendLine(p[0], p[1], posData.world, player, particles_1_13.SOUL_FIRE_FLAME);
-                sendLine(p[0], p[2], posData.world, player, particles_1_13.SOUL_FIRE_FLAME);
+                sendLine(p[0], p[1], posData.world, player, Particle.SOUL_FIRE_FLAME);
+                sendLine(p[0], p[2], posData.world, player, Particle.SOUL_FIRE_FLAME);
 
                 if (p[0] == null) endLine = true;
             } else {
@@ -105,47 +104,53 @@ public class SendParticles extends TimerTask {
                         p[1] != null ? p[1] : p[0],
                         p[0]
                 };
-                curveLength = sendBezier(bezierPos, posData.world, player, particles_1_13.FLAME, curveLength);
-            }
+                curveLength = sendBezier(bezierPos, posData.world, player, Particle.DUST, curveLength, config.posColor);
+         }
         }
     }
 
-    private void sendCube(Vector3 pos, World world, org.bukkit.entity.Player player, Color color) {
-        int density = config.posDensity;
+private void sendCube(Vector3 pos, World world, Player player, Color color) {
+    int density = config.posDensity;
 
-        for (int x = 0; x <= density; x++) {
-            for (int y = 0; y <= density; y++) {
-                for (int z = 0; z <= density; z++) {
-                    boolean isXEdge = x == 0 || x == density;
-                    boolean isYEdge = y == 0 || y == density;
-                    boolean isZEdge = z == 0 || z == density;
+    for (int x = 0; x <= density; x++) {
+        for (int y = 0; y <= density; y++) {
+            for (int z = 0; z <= density; z++) {
 
-                    double ax = x * (1.0 / density);
-                    double ay = y * (1.0 / density);
-                    double az = z * (1.0 / density);
-                    Location location = getLocation(world, pos.add(ax, ay, az));
+                boolean isXEdge = x == 0 || x == density;
+                boolean isYEdge = y == 0 || y == density;
+                boolean isZEdge = z == 0 || z == density;
 
-                    if ((isXEdge && isYEdge) || (isYEdge && isZEdge) || (isZEdge && isXEdge)) {
-                        particles_1_13.DUST
-                                .color(color, 1D)
-                                .packet(true, location)
-                                .sendTo(player);
-                    }
-                }
-                Location location = getLocation(world, pos.add(0.5, 0.5, 0.5));
-                try {
-                    particles_1_13.SOUL_FIRE_FLAME
-                            .packet(true, location)
-                            .sendTo(player);
-                } catch (ParticleException e) {
-                    particles_1_13.HAPPY_VILLAGER
-                            .packet(true, location)
-                            .sendTo(player);
+                double ax = x * (1.0 / density);
+                double ay = y * (1.0 / density);
+                double az = z * (1.0 / density);
+
+                Location location = getLocation(world, pos.add(ax, ay, az));
+
+                if ((isXEdge && isYEdge) || (isYEdge && isZEdge) || (isZEdge && isXEdge)) {
+
+                    player.spawnParticle(
+                        Particle.DUST,
+                        location,
+                        1,
+                        0,0,0,
+                        0,
+                        new Particle.DustOptions(color, 1f)
+                    );
                 }
             }
         }
     }
 
+    Location location = getLocation(world, pos.add(0.5, 0.5, 0.5));
+
+    player.spawnParticle(
+        Particle.SOUL_FIRE_FLAME,
+        location,
+        1,
+        0,0,0,
+        0
+    );
+}
     private void sendCross(Vector3 pos, World world, org.bukkit.entity.Player player, Color color) {
         int density = (int) (config.posDensity * sqrt(3) / 2);
 
@@ -157,27 +162,29 @@ public class SendParticles extends TimerTask {
                         double ay = 0.5 * y + (double) (density * y + (-y * 2 + 1) * i) / density * 0.5;
                         double az = 0.5 * z + (double) (density * z + (-z * 2 + 1) * i) / density * 0.5;
                         Location location = getLocation(world, pos.add(ax, ay, az));
-                        particles_1_13.DUST
-                                .color(color, 1D)
-                                .packet(true, location)
-                                .sendTo(player);
+                        player.spawnParticle(
+                        Particle.DUST,
+                        location,
+                        1,
+                        0,0,0,
+                        0,
+                        new Particle.DustOptions(color, 1f)
+                      );
                     }
                 }
                 Location location = getLocation(world, pos.add(0.5, 0.5, 0.5));
-                try {
-                    particles_1_13.SOUL_FIRE_FLAME
-                            .packet(true, location)
-                            .sendTo(player);
-                } catch (ParticleException e) {
-                    particles_1_13.HAPPY_VILLAGER
-                            .packet(true, location)
-                            .sendTo(player);
-                }
+                    player.spawnParticle(
+                          Particle.SOUL_FIRE_FLAME,
+                          location,
+                          1,
+                          0,0,0,
+                          0
+                          );
             }
         }
     }
 
-    private void sendLine(Vector3 pos1, Vector3 pos2, World world, org.bukkit.entity.Player player, ParticleTypeMotion particleType) {
+    private void sendLine(Vector3 pos1, Vector3 pos2, World world, org.bukkit.entity.Player player, Particle particleType) {
         if (pos1 == null || pos2 == null) return;
 
         int distance = (int) pos1.distance(pos2);
@@ -194,15 +201,13 @@ public class SendParticles extends TimerTask {
             if ((PlayerVec.distance(vec) / 3000 * config.lineDensity) + (0.8 / config.lineDensity) < vec.distance(bVec)) {
                 Location location = getLocation(world, vec);
                 if (cnt % INTERVAL == r) {
-                    try {
-                        particleType
-                                .packet(true, location)
-                                .sendTo(player);
-                    } catch (ParticleException e) {
-                        particles_1_13.HAPPY_VILLAGER
-                                .packet(true, location)
-                                .sendTo(player);
-                    }
+                        player.spawnParticle(
+                          Particle.SOUL_FIRE_FLAME,
+                          location,
+                          1,
+                          0,0,0,
+                          0
+                          );
                 }
                 bVec = vec;
                 cnt++;
@@ -210,41 +215,54 @@ public class SendParticles extends TimerTask {
         }
     }
 
-    private double sendBezier(Vector3[] p, World world, org.bukkit.entity.Player player, ParticleTypeMotion particleType, double totalLength) {
-        if (p[0] == null || p[1] == null || p[2] == null || p[3] == null) return config.lineMaxLength + 1;
+    private double sendBezier(Vector3[] p, World world, Player player, Particle particleType, double totalLength, Color color) {
+    if (p[0] == null || p[1] == null || p[2] == null || p[3] == null) return config.lineMaxLength + 1;
 
-        if (p[0].distance(p[3]) > config.lineMaxLength) return config.lineMaxLength + 1;
-        if (p[0].distance(p[1]) > config.lineMaxLength) return config.lineMaxLength + 1;
-        if (p[3].distance(p[2]) > config.lineMaxLength) return config.lineMaxLength + 1;
+    if (p[0].distance(p[3]) > config.lineMaxLength) return config.lineMaxLength + 1;
+    if (p[0].distance(p[1]) > config.lineMaxLength) return config.lineMaxLength + 1;
+    if (p[3].distance(p[2]) > config.lineMaxLength) return config.lineMaxLength + 1;
 
-        double length = totalLength + bezierLength(p, p[0].distance(p[3]) * 20);
-        if (length > config.lineMaxLength) return length;
+    double length = totalLength + bezierLength(p, p[0].distance(p[3]) * 20);
+    if (length > config.lineMaxLength) return length;
 
-        int cnt = 0;
-        Vector3 PlayerVec = adapt(com.sk89q.worldedit.bukkit.BukkitAdapter.adapt(player).getLocation().toVector());
-        Vector3 bVec = bezierCoordinate(p, 0);
-        for (double i = 0; i <= 1; i += 1.0 / (length * config.lineDensity)) {
-            Vector3 vec = bezierCoordinate(p, i);
-            if ((PlayerVec.distance(vec) / 3000 * config.lineDensity) + (0.8 / config.lineDensity) < vec.distance(bVec)) {
-                Location location = getLocation(world, vec);
-                if (cnt % INTERVAL == r) {
-                    try {
-                        particleType
-                                .packet(true, location)
-                                .sendTo(player);
-                    } catch (ParticleException e) {
-                        particles_1_13.HAPPY_VILLAGER
-                                .packet(true, location)
-                                .sendTo(player);
-                    }
+    int cnt = 0;
+    Vector3 PlayerVec = adapt(com.sk89q.worldedit.bukkit.BukkitAdapter.adapt(player).getLocation().toVector());
+    Vector3 bVec = bezierCoordinate(p, 0);
+
+    for (double i = 0; i <= 1; i += 1.0 / (length * config.lineDensity)) {
+        Vector3 vec = bezierCoordinate(p, i);
+        if ((PlayerVec.distance(vec) / 3000 * config.lineDensity) + (0.8 / config.lineDensity) < vec.distance(bVec)) {
+            Location location = getLocation(world, vec);
+
+            if (cnt % INTERVAL == r) {
+                if (particleType == Particle.DUST) {
+                    // REDSTONE requires DustOptions
+                    player.spawnParticle(
+                        particleType,
+                        location,
+                        1,
+                        0, 0, 0,
+                        0,
+                        new Particle.DustOptions(color, 1f)
+                    );
+                } else {
+                    player.spawnParticle(
+                        particleType,
+                        location,
+                        1,
+                        0, 0, 0,
+                        0
+                    );
                 }
-                bVec = vec;
-                cnt++;
             }
-        }
 
-        return length;
+            bVec = vec;
+            cnt++;
+        }
     }
+
+    return length;
+}
 
     private static Location getLocation(World world, Vector3 position) {
         return com.sk89q.worldedit.bukkit.BukkitAdapter.adapt(com.sk89q.worldedit.bukkit.BukkitAdapter.adapt(world), adapt(position));
